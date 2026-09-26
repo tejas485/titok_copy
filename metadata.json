@@ -1,0 +1,6 @@
+{
+  "name": "StreamGrid Flutter Architecture Studio",
+  "description": "Full-stack short-form video platform prototype, 12-screen mobile system blueprint, live Express media streaming backend, and Flutter client architecture.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
