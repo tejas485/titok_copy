@@ -1,67 +1,55 @@
-# 📱 TikTok-Style Short-Video Streaming Platform
+# 📱 TikTok-Style Short-Video Flutter Client
 
-A high-performance, low-latency, short-video streaming and upload platform built using **Flutter** and **Node.js**. This platform completely bypasses traditional rest-based HTTP constraints by utilizing an end-to-end **gRPC over HTTP/2** architecture, enabling smooth vertical video scrolling, real-time download progress tracking, and client-streaming binary media uploads.
+A high-performance Flutter mobile application layout implementing a vertically swipeable entertainment feed and a creator profile grid system. This repository contains the complete frontend architecture designed to communicate seamlessly with a detached, remote backend service over an **end-to-end gRPC layer**.
 
 ---
 
 ## 🚀 Key Features
 
-* **Infinite Video Loop Feed:** Vertical swipe mechanics (similar to TikTok) backed by a smart modulo calculation engine that loops a collection of videos seamlessly without index bounds or crashing.
-* **Dynamic Connection Hub (No Hardcoding):** A real-time connection box in the mobile UI that allows developers to paste temporary secure tunnel URLs (like Pinggy, ngrok, or Cloudflare) to bridge the mobile device directly to a remote development workspace over the air.
-* **Progress-Aware Streaming:** Displays real-time download status indicators (e.g., `Streaming Video Chunk: 45%`) calculated on the fly as individual binary fragments arrive.
-* **Client-Streaming Media Uploads:** Allows users to pick/record videos on their mobile device and stream them up to the backend in synchronized binary blocks, instantly refreshing the server’s media catalog.
-* **Sleek Portfolio Grids:** Dynamically maps creator profiles—including a special master portfolio folder—into an efficient 3-column media preview explorer matching standard modern entertainment layouts.
+* **Infinite Video Loop Feed:** Vertical swipe mechanics backed by an asynchronous modulo loop compilation engine that plays an endless scroll of videos without index crashes.
+* **Dynamic Connection Box (No Hardcoding):** A real-time connection input field in the mobile UI that accepts live TCP tunnel endpoints (like Pinggy, ngrok, or localhost.run) to bind the app to a remote workspace over the air.
+* **Progress-Aware Streaming:** Displays dynamic loading loops (e.g., `Streaming Video Chunk: 62%`) calculated on the fly as binary fragments arrive.
+* **Client-Streaming Media Uploads:** Reads local device video assets, segments them into precise **64KB chunks**, and streams them across a single HTTP/2 connection wire to save new videos live onto the server.
 
 ---
 
-## 🛠️ Technical Specifications & Architecture
+## 🛠️ Cross-Repo Technical Architecture
 
-The ecosystem relies on structural serialization contracts defined via **Protocol Buffers (Protobuf)**, executing RPC (Remote Procedure Call) operations over a persistent multiplexed HTTP/2 transport link.
-
-### 🌐 Network & Infrastructure Topography
 ```text
-+-----------------------------+               +-------------------------------+
++------------------------------+                 +-------------------------------+
 
-|     Mobile Client App       |               | Public Internet TCP Tunnel    |
-|   (Physical / Emulator)     |==[ HTTP/2 ]==>| (e.g., Pinggy/ngrok Port 443) |
-| Secure/Insecure Channels    |               | Passes raw binary data clean  |
-+-----------------------------+               +-------------------------------+
-                                                              ||
-                                                              \/
-                                              +-------------------------------+
+|    Mobile Flutter Client     |                 | Public Internet TCP Tunnel    |
+| (Physical Phone / Emulator)  |===[ HTTP/2 ]===>| (e.g., Pinggy/ngrok Port 443) |
+| Insecure Multiplexed Channel |                 | Bypasses web proxy downgrades |
++------------------------------+                 +-------------------------------+
+                                                                 ||
+                                                                 \/
+                                                 +-------------------------------+
 
-                                              |    Backend Node gRPC Engine   |
-                                              |     Listening on Port 3005    |
-                                              |   Compiles directly to disk   |
-                                              +-------------------------------+
+                                                 | Remote Backend Repository     |
+                                                 | (Running in separate runtime) |
+                                                 +-------------------------------+
 ```
 
-### 📊 Data Exchange Workflows
+### 📊 External Data Exchange Operations
 
 #### 🔑 1. Short-Lived Token Authentication Loop
-* On initial app launch, the client triggers the `GetAuthToken` unary RPC method.
-* The server verifies the client identity and responds with a signed **JSON Web Token (JWT)** with a strict **1-hour lifespan (3600 seconds)**.
-* **Automatic Cache Refresh Interceptor:** The mobile infrastructure monitors all outbound pipelines. If any request catches a gRPC Status `16 (UNAUTHENTICATED)` exception due to token expiration, an interceptor automatically clears cache memory, requests a fresh token in the background, and seamlessly retries the interrupted video flow.
+* On initial app launch, the application calls the `GetAuthToken` method to fetch a signed **JWT token** valid for **1 hour (3600 seconds)**.
+* **Error Interception:** If any remote procedure call catches a gRPC Status `16 (UNAUTHENTICATED)` exception due to token timeout, an internal interceptor background process clears cache memory, requests a fresh token, and automatically retries the broken video flow.
 
-#### 📺 2. Continuous Video Feed (Server-to-Client Streaming)
-* When a user advances positions on the swiping feed, the mobile app invokes `StreamFeedVideo`, passing the active token and the current virtual position integer (`video_index`).
-* The backend intercepts the integer and processes an internal folder modulo calculation against the storage tree (`/videos`). This automatically maps any index beyond the current file count (e.g., index `10`) smoothly back to `v1.mp4`.
-* The server opens a read stream from the local hard drive using a specialized operational **64KB frame chunk buffer allocation size** (`highWaterMark: 65536`) to protect system memory under load.
-* As chunks are pushed down the wire, the mobile application receives them inside an asynchronous stream handler, continuously updating UI progress loops (`current_byte / total_bytes`) before assembling the final file buffer into native media players (`VideoPlayerController`).
+#### 📺 2. Continuous Video Feed System
+* As the user scrolls, the app requests the virtual position target (`video_index`). 
+* Inbound binary `bytes` fragments are caught inside an asynchronous stream handler, tracked via a progress indicator (`current_byte / total_bytes`), and assembled directly into a temporary file on the device filesystem storage layout for seamless playback initialization.
 
-#### 🗂️ 3. Profile Catalog Synchronization
-* When loading user grids, the app dispatches `GetProfileData` with a targeted folder pointer (`profile_id: "profile_10_all"`).
-* The server dynamically rescans the directory structure tree on the fly to capture any newly uploaded files and passes back a structural array payload container holding current filename keys and user metadata.
-
-#### 📤 4. Mobile-to-Server Uploads (Client-to-Server Streaming)
-* To push a video up to the system, the mobile app opens a client-streaming pipeline using the `UploadMediaFile` endpoint contract.
-* The app reads the file from local phone storage and slices the raw data array into successive **64KB binary chunks** inside memory.
-* The app iterates through the chunks and writes them sequentially onto the open gRPC stream channel along with metadata headers (active token and destination filename).
-* The backend catches the sequential packets and passes them directly to a live filesystem write pipe (`fs.createWriteStream`). Once the client closes the stream, the file assembly completes, updates the global profile directories, and becomes instantly streamable across the app ecosystem.
+#### 📤 3. Mobile-to-Server Upload Pipeline
+* Slices a selected video asset file into low-latency **64KB binary chunks** inside memory.
+* Packs individual `UploadRequest` messages with the authentication token and target filename properties, streaming the frames continuously down the channel wire until an end block signal is emitted.
 
 ---
 
-## 🗂️ Protocol Buffer Interface Definition (`media.proto`)
+## 🛠️ Protocol Buffer Client Interface (`media.proto`)
+
+Ensure this compilation file contract matches the detached server structure:
 
 ```protobuf
 syntax = "proto3";
@@ -75,68 +63,15 @@ service MediaService {
   rpc UploadMediaFile (stream UploadRequest) returns (UploadResponse);
 }
 
-message AuthRequest {
-  string client_id = 1;
-}
-
-message AuthResponse {
-  bool success = 1;
-  string token = 2;
-  int32 expires_in_seconds = 3;
-}
-
-message FeedRequest {
-  string token = 1;
-  int32 video_index = 2; 
-}
-
-message VideoChunk {
-  bytes chunk_data = 1;   
-  int64 current_byte = 2;
-  int64 total_bytes = 3;
-}
-
-message ProfileRequest {
-  string token = 1;
-  string profile_id = 2;  
-}
-
+message AuthRequest { string client_id = 1; }
+message AuthResponse { bool success = 1; string token = 2; int32 expires_in_seconds = 3; }
+message FeedRequest { string token = 1; int32 video_index = 2; }
+message VideoChunk { bytes chunk_data = 1; int64 current_byte = 2; int64 total_bytes = 3; }
+message ProfileRequest { string token = 1; string profile_id = 2; }
 message ProfileResponse {
-  bool success = 1;
-  string profile_id = 2;
-  string username = 3;
-  string display_name = 4;
-  string avatar_url = 5;
-  repeated string video_list = 6; 
+  bool success = 1; string profile_id = 2; string username = 3;
+  string display_name = 4; string avatar_url = 5; repeated string video_list = 6;
 }
-
-message UploadRequest {
-  string token = 1;
-  string filename = 2;
-  bytes chunk_data = 3;
-}
-
-message UploadResponse {
-  bool success = 1;
-  string message = 2;
-  string file_id = 3;
-}
+message UploadRequest { string token = 1; string filename = 2; bytes chunk_data = 3; }
+message UploadResponse { bool success = 1; string message = 2; string file_id = 3; }
 ```
-
----
-
-## 🏁 Quickstart Guide for Sandbox Environments
-
-### 🚀 Running the Server
-1. Ensure a local directory named `/videos` exists in your project root containing your initial test media assets (`v1.mp4`, `v2.mp4`, etc.).
-2. Kill any conflicting active network locks and spin up the Node engine:
-   ```bash
-   fuser -k 3005/tcp && node grpc-server.js
-   ```
-
-### 🌐 Establishing the Network Tunnel
-Open a separate split terminal window panel instance and spin up a raw TCP tunnel to preserve binary HTTP/2 frames intact across the public internet:
-```bash
-ssh -p 443 -R 0:localhost:3005 tcp@a.pinggy.io
-```
-Copy the generated connection string (e.g., `jtkdm-something.run.pinggy-free.link:38173`), paste it directly into your live mobile runtime input textbox field, and click **Connect**.
