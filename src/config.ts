@@ -1,7 +1,7 @@
-import avatarAlex from './assets/images/creator_avatar_alex_1790420981846.jpg';
-import coverUiStack from './assets/images/video_cover_ui_stack_1790421003293.jpg';
-import coverScrollPhysics from './assets/images/video_cover_scroll_physics_1790421015252.jpg';
-import coverFigmaProto from './assets/images/video_cover_figma_proto_1790421028586.jpg';
+const avatarAlex = '/src/assets/images/creator_avatar_alex_1790420981846.jpg';
+const coverUiStack = '/src/assets/images/video_cover_ui_stack_1790421003293.jpg';
+const coverScrollPhysics = '/src/assets/images/video_cover_scroll_physics_1790421015252.jpg';
+const coverFigmaProto = '/src/assets/images/video_cover_figma_proto_1790421028586.jpg';
 
 /**
  * Central configuration variable pointing to the public cloud URL: https://github.dev

@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package streamgrid.grpc.v1;
+
+option java_multiple_files = true;
+option java_package = "com.streamgrid.titan.grpc";
+option java_outer_classname = "VideoStreamingProto";
+
+// ============================================================================
+// Mobile UI Integration Manual: gRPC Video Streaming Engine
+// Host Address Target: Live ngrok output instance
+// Security Level: Insecure (ChannelCredentials.Insecure for regional sandboxes)
+// ============================================================================
+
+service VideoStreamingEngine {
+  // 1. Authentication Execution Loop
+  // Invoked when the mobile application boots up or intercepts UNAUTHENTICATED.
+  rpc GetAuthToken (AuthTokenRequest) returns (AuthTokenResponse);
+
+  // 2. Continuous Video Feed System (gRPC Server-Streaming)
+  // Streams chunked binary video buffers for video_index (with modulo-9 loop wrap-around:
+  // index 9 -> v9.mp4, index 10 -> wraps around to v1.mp4).
+  rpc StreamFeedVideo (StreamVideoRequest) returns (stream VideoChunk);
+
+  // 3. Profile Collection API
+  // Populates profile galleries and the special 10th folder layout (profile_10_all)
+  // containing all 9 videos: ["v1.mp4" .. "v9.mp4"].
+  rpc GetProfileData (ProfileDataRequest) returns (ProfileDataResponse);
+
+  // 4. Mobile-to-Server Upload Pipe (Client-Streaming 64KB binary chunks)
+  rpc UploadMediaFile (stream UploadRequest) returns (UploadResponse);
+
+  // 5. Server Video Search API (Fetches matching videos from server via gRPC)
+  rpc SearchVideos (SearchVideosRequest) returns (SearchVideosResponse);
+}
+
+message AuthTokenRequest {
+  string client_id = 1; // e.g. "mobile_phone_client"
+}
+
+message AuthTokenResponse {
+  bool success = 1;
+  string token = 2;              // JWT access token ("eyJhbGciOiJIUzI1NiIsIn...")
+  int32 expires_in_seconds = 3;  // 3600 (1 hour expiry cycle tracker)
+}
+
+message StreamVideoRequest {
+  string token = 1;       // YOUR_JWT_ACCESS_TOKEN
+  int32 video_index = 2;  // 1-based index; increments by 1 on swipe down (10 -> v1.mp4)
+}
+
+message VideoChunk {
+  bytes chunk_data = 1;      // Raw binary MP4 slice
+  int64 current_byte = 2;    // Cumulative bytes transmitted so far
+  int64 total_bytes = 3;     // Total byte length of target v{N}.mp4 asset
+  string resolved_file = 4;  // e.g. "v1.mp4" .. "v9.mp4"
+  int32 video_index = 5;     // Requested video_index
+  bool is_end = 6;           // True on final stream end marker
+}
+
+message ProfileDataRequest {
+  string token = 1;       // YOUR_JWT_ACCESS_TOKEN
+  string profile_id = 2;  // e.g. "profile_10_all"
+}
+
+message ProfileDataResponse {
+  bool success = 1;
+  string profile_id = 2;             // "profile_10_all"
+  string username = 3;               // "master_creator_10"
+  string display_name = 4;           // "All Videos Portfolio Folder"
+  string avatar_url = 5;             // "https://dicebear.com"
+  repeated string video_list = 6;    // ["v1.mp4", "v2.mp4", ..., "v9.mp4"]
+}
+
+message UploadRequest {
+  string token = 1;       // YOUR_JWT_ACCESS_TOKEN
+  string filename = 2;    // e.g. "v10.mp4"
+  bytes chunk_data = 3;   // 64KB (65536 bytes) sequential binary slice
+}
+
+message UploadResponse {
+  bool success = 1;
+  string message = 2;
+  string file_id = 3;
+  bool confirmed = 4;
+  string filename = 5;
+  int32 chunks_received = 6;
+  int64 total_bytes = 7;
+}
+
+message SearchVideosRequest {
+  string token = 1;  // YOUR_JWT_ACCESS_TOKEN
+  string query = 2;  // Search keyword, @username, #hashtag, or filename
+}
+
+message SearchVideosResponse {
+  bool success = 1;
+  string query = 2;
+  int32 total_matches = 3;
+  repeated string video_list = 4;
+}

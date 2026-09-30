@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package media;
+
+option java_multiple_files = true;
+option java_package = "com.streamgrid.titan.media";
+option java_outer_classname = "MediaProto";
+
+// ============================================================================
+// MASTER CONFIGURATION BLUEPRINT: TWO-WAY MOBILE TO CODESPACE gRPC ENGINE
+// - Operational Port Target: 3005 (Forwarded via Codespace Gateway on Port 443)
+// - Flutter ClientChannel Host: Strip leading "https://" prefix
+// ============================================================================
+
+service MediaService {
+  // 🔐 Authentication Lifecycle Flow (1-hour / 3600s token lifecycle)
+  rpc GetAuthToken (AuthRequest) returns (AuthResponse);
+
+  // 📺 Continuous Video Feed System (Server-Streaming with Modulo Infinite Loop)
+  rpc StreamFeedVideo (FeedRequest) returns (stream VideoChunk);
+
+  // 🗂️ Profile Collection API (profile_10_all -> master_creator_10 3-column grid)
+  rpc GetProfileData (ProfileRequest) returns (ProfileResponse);
+
+  // 🔍 Server Video Search API (fetches matching server videos via gRPC)
+  rpc SearchVideos (SearchRequest) returns (SearchResponse);
+
+  // 📤 Mobile-to-Server Upload Pipe (Client-Streaming 64KB binary chunks)
+  rpc UploadMediaFile (stream UploadRequest) returns (UploadResponse);
+}
+
+message AuthRequest {
+  string client_id = 1;
+}
+
+message AuthResponse {
+  bool success = 1;
+  string token = 2;
+  int32 expires_in_seconds = 3;
+}
+
+message FeedRequest {
+  string token = 1;
+  int32 video_index = 2;
+}
+
+message VideoChunk {
+  bytes chunk_data = 1;
+  int64 current_byte = 2;
+  int64 total_bytes = 3;
+}
+
+message ProfileRequest {
+  string token = 1;
+  string profile_id = 2;
+}
+
+message ProfileResponse {
+  bool success = 1;
+  string profile_id = 2;
+  string username = 3;
+  string display_name = 4;
+  string avatar_url = 5;
+  repeated string video_list = 6;
+}
+
+message UploadRequest {
+  string token = 1;
+  string filename = 2;
+  bytes chunk_data = 3;
+}
+
+message UploadResponse {
+  bool success = 1;
+  string message = 2;
+  string file_id = 3;
+  bool confirmed = 4;
+  string filename = 5;
+  int32 chunks_received = 6;
+  int64 total_bytes = 7;
+}
+
+message SearchRequest {
+  string token = 1;
+  string query = 2;
+}
+
+message ServerVideoItem {
+  string video_id = 1;
+  int32 video_index = 2;
+  string filename = 3;
+  string caption = 4;
+  string username = 5;
+  string display_name = 6;
+  string avatar_url = 7;
+  string stream_url = 8;
+  int32 likes_count = 9;
+  int32 comments_count = 10;
+  string views_label = 11;
+}
+
+message SearchResponse {
+  bool success = 1;
+  string query = 2;
+  int32 total_matches = 3;
+  repeated string video_list = 4;
+  repeated ServerVideoItem videos = 5;
+}

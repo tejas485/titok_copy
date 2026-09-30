@@ -1,0 +1,40 @@
+name: Build StreamGrid Titan Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    name: Compile Signed Flutter & Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dart & Titan Dependencies
+        run: flutter pub get
+
+      - name: Build Release APK (Universal + Per-ABI)
+        run: |
+          flutter build apk --release
+          flutter build apk --debug
+
+      - name: Upload Compiled Release APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamgrid-titan-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
